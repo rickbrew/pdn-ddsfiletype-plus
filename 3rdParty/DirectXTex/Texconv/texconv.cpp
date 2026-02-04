@@ -189,6 +189,7 @@ namespace
     {
         FORMAT_DXT5_NM = 1,
         FORMAT_DXT5_RXGB,
+        FORMAT_24BPP_LEGACY,
     };
 
     static_assert(OPT_FLAGS_MAX <= 64, "dwOptions is a unsigned int bitfield");
@@ -324,7 +325,7 @@ namespace
         { nullptr,                  0 }
     };
 
-    #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
+#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
     const SValue<DXGI_FORMAT> g_pFormats[] =
     {
@@ -450,6 +451,7 @@ namespace
         { L"BC3n", FORMAT_DXT5_NM },
         { L"DXT5nm", FORMAT_DXT5_NM },
         { L"RXGB", FORMAT_DXT5_RXGB },
+        { L"RGB24", FORMAT_24BPP_LEGACY },
 
         { nullptr, 0 }
     };
@@ -510,7 +512,7 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
-    #undef DEFFMT
+#undef DEFFMT
 
     const SValue<uint32_t> g_pFilters[] =
     {
@@ -556,15 +558,15 @@ namespace
     constexpr uint32_t CODEC_PPM = 0xFFFF0006;
     constexpr uint32_t CODEC_PFM = 0xFFFF0007;
 
-    #ifdef USE_OPENEXR
+#ifdef USE_OPENEXR
     constexpr uint32_t CODEC_EXR = 0xFFFF0008;
-    #endif
-    #ifdef USE_LIBJPEG
+#endif
+#ifdef USE_LIBJPEG
     constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
-    #endif
-    #ifdef USE_LIBPNG
+#endif
+#ifdef USE_LIBPNG
     constexpr uint32_t CODEC_PNG = 0xFFFF000A;
-    #endif
+#endif
 
     const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
     {
@@ -1271,6 +1273,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     bool keepRecursiveDirs = false;
     bool dxt5nm = false;
     bool dxt5rxgb = false;
+    bool use24bpp = false;
     uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
     uint32_t zeroElements[4] = {};
     uint32_t oneElements[4] = {};
@@ -1421,10 +1424,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_PAPER_WHITE_NITS:
             case OPT_PRESERVE_ALPHA_COVERAGE:
             case OPT_SWIZZLE:
-        #ifdef USE_XBOX_EXTS
+            #ifdef USE_XBOX_EXTS
             case OPT_XGMODE:
-        #endif
-                // These support either "-arg:value" or "-arg value"
+            #endif
+                    // These support either "-arg:value" or "-arg value"
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1486,6 +1489,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         case FORMAT_DXT5_RXGB:
                             format = DXGI_FORMAT_BC3_UNORM;
                             dxt5rxgb = true;
+                            break;
+
+                        case FORMAT_24BPP_LEGACY:
+                            format = DXGI_FORMAT_B8G8R8X8_UNORM;
+                            use24bpp = true;
                             break;
 
                         default:
@@ -1895,7 +1903,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
-        #ifdef USE_XBOX_EXTS
+            #ifdef USE_XBOX_EXTS
             case OPT_XGMODE:
                 {
                 #ifdef _USE_SCARLETT
@@ -1927,7 +1935,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     XGSetHardwareVersion(static_cast<XG_HARDWARE_VERSION>(mode));
                     break;
                 }
-        #endif // USE_XBOX_EXTS
+            #endif // USE_XBOX_EXTS
             }
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
@@ -2014,8 +2022,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     #ifndef USE_XBOX_EXTS
         constexpr
-    #endif
-        bool isXbox = false;
+        #endif
+            bool isXbox = false;
         if (_wcsicmp(ext.c_str(), L".dds") == 0 || _wcsicmp(ext.c_str(), L".ddx") == 0)
         {
         #ifdef USE_XBOX_EXTS
@@ -2038,7 +2046,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
             }
             else
-        #endif // USE_XBOX_EXTS
+            #endif // USE_XBOX_EXTS
             {
                 DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
                 if (dwOptions & (UINT64_C(1) << OPT_DDS_DWORD_ALIGN))
@@ -2157,7 +2165,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     #ifdef USE_LIBJPEG
         else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
         {
-            hr = LoadFromJPEGFile(curpath.c_str(), &info, *image);
+            JPEG_FLAGS jpegFlags = JPEG_FLAGS_NONE;
+            if (dwOptions & (UINT64_C(1) << OPT_IGNORE_SRGB_METADATA))
+            {
+                jpegFlags |= JPEG_FLAGS_DEFAULT_LINEAR;
+            }
+
+            hr = LoadFromJPEGFile(curpath.c_str(), jpegFlags, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -2169,7 +2183,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     #ifdef USE_LIBPNG
         else if (_wcsicmp(ext.c_str(), L".png") == 0)
         {
-            hr = LoadFromPNGFile(curpath.c_str(), &info, *image);
+            PNG_FLAGS pngFlags = (IsBGR(format)) ? PNG_FLAGS_BGR : PNG_FLAGS_NONE;
+            if (dwOptions & (UINT64_C(1) << OPT_IGNORE_SRGB_METADATA))
+            {
+                pngFlags |= PNG_FLAGS_IGNORE_SRGB;
+            }
+
+            hr = LoadFromPNGFile(curpath.c_str(), pngFlags, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3750,7 +3770,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                 }
                 else
-            #endif // USE_XBOX_EXTS
+                #endif // USE_XBOX_EXTS
                 {
                     DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
                     if (dwOptions & (UINT64_C(1) << OPT_USE_DX10))
@@ -3762,6 +3782,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         if (dxt5rxgb)
                         {
                             ddsFlags |= DDS_FLAGS_FORCE_DXT5_RXGB;
+                        }
+                        else if (use24bpp)
+                        {
+                            ddsFlags |= DDS_FLAGS_FORCE_24BPP_RGB;
                         }
 
                         ddsFlags |= DDS_FLAGS_FORCE_DX9_LEGACY;
@@ -3794,12 +3818,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             #endif
             #ifdef USE_LIBJPEG
             case CODEC_JPEG:
-                hr = SaveToJPEGFile(img[0], destName.c_str());
+                hr = SaveToJPEGFile(img[0], JPEG_FLAGS_NONE, destName.c_str());
                 break;
             #endif
             #ifdef USE_LIBPNG
             case CODEC_PNG:
-                hr = SaveToPNGFile(img[0], destName.c_str());
+                hr = SaveToPNGFile(img[0], PNG_FLAGS_NONE, destName.c_str());
                 break;
             #endif
 
@@ -3856,11 +3880,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     {
                                         options.pstrName = const_cast<wchar_t*>(L"HeifCompressionMethod");
                                         varValues.vt = VT_UI1;
-                                        #if defined(NTDDI_WIN10_CU)
+                                    #if defined(NTDDI_WIN10_CU) && !defined(__MINGW32__)
                                         varValues.bVal = WICHeifCompressionNone;
-                                        #else
+                                    #else
                                         varValues.bVal = 0x1 /* WICHeifCompressionNone */;
-                                        #endif
+                                    #endif
                                     }
                                     else if (wicQuality >= 0.f)
                                     {

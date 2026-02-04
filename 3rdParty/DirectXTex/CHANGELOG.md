@@ -6,6 +6,21 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### October 27, 2025
+* DDS writer now supports a `DDS_FLAGS_FORCE_24BPP_RGB` flag
+* JPEG and PNG auxiliary reader/writer various bug fixes
+  * *breaking change* All functions now take flags `PNG_FLAGS` or `JPEG_FLAGS`
+* Minor code review
+* Added October 2025 GDK projects for VS 2022
+* CMake project update to use 3.21 minimum
+* texconv:
+  * The `-f` format now accepts `RGB24`
+
+### July 9, 2025
+* Reformat source using updated .editorconfig settings and general lint cleanup
+* Minor code review
+* CMake project updates
+
 ### March 24, 2025
 * C++17 `std::byte` support for `FromMemory` functions
 * Added **ComputeTileShape** method to compute Direct3D Tiled Resource standard dimensions
@@ -43,6 +58,7 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 * Xbox auxiliary now has **EncodeDDSHeader** function
 * ScreenGrab9 minor DDS header fix when writing A2W10V10U10 legacy mixed formats
 * CMake project updates including support for ARM64EC
+
 * Added GitHub Actions YAML files
 
 ### June 4, 2024
@@ -251,9 +267,9 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ### June 1, 2020
 * Converted to typed enum bitmask flags (see release notes for details on this potential *breaking change*)
-  + **ComputePitch**, **xxxDDSxxx**, **xxxWICxxx**, **FlipRotate**, **Resize**, **Convert**, **GenerateMipMaps**, **GenerateMipMaps3D**, **PremultiplyAlpha**, **Compress**, **ComputeNormalMap**, **CopyRectangle**, **ComputeMSE**
+  * **ComputePitch**, **xxxDDSxxx**, **xxxWICxxx**, **FlipRotate**, **Resize**, **Convert**, **GenerateMipMaps**, **GenerateMipMaps3D**, **PremultiplyAlpha**, **Compress**, **ComputeNormalMap**, **CopyRectangle**, **ComputeMSE**
 * ``WIC_FLAGS_DEFAULT_SRGB`` / ``WIC_LOADER_SRGB_DEFAULT`` flag added when loading image via WIC without explicit colorspace metadata
-*  WIC loader for  ``PNG`` codec now checks ``gAMA`` chunk to determine colorspace if the ``sRGB`` chunk is not found for legacy sRGB detection.
+* WIC loader for  ``PNG`` codec now checks ``gAMA`` chunk to determine colorspace if the ``sRGB`` chunk is not found for legacy sRGB detection.
 * Fixed conformance issues when using ``/Zc:preprocessor``
 * CMake project updates
 
@@ -564,9 +580,9 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ### June 15, 2013
 * Custom filtering implementation for **Resize** & **GenerateMipMaps(3D)** - Point, Box, Linear, Cubic, and Triangle
-  + ``TEX_FILTER_TRIANGLE`` finite low-pass triangle filter
-  + ``TEX_FILTER_WRAP``, ``TEX_FILTER_MIRROR`` texture semantics for custom filtering
-  + ``TEX_FILTER_BOX`` alias for ``TEX_FILTER_FANT WIC``
+  * ``TEX_FILTER_TRIANGLE`` finite low-pass triangle filter
+  * ``TEX_FILTER_WRAP``, ``TEX_FILTER_MIRROR`` texture semantics for custom filtering
+  * ``TEX_FILTER_BOX`` alias for ``TEX_FILTER_FANT WIC``
 * Ordered and error diffusion dithering for non-WIC conversion
 * sRGB gamma correct custom filtering and conversion
 * ``DDS_FLAGS_EXPAND_LUMINANCE`` - Reader conversion option for L8, L16, and A8L8 legacy DDS files

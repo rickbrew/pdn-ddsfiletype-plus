@@ -45,6 +45,17 @@ else()
     set(DIRECTX_HOST_ARCH x64)
 endif()
 
+#--- Check DIRECTX_ARCH value
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    if(DIRECTX_ARCH MATCHES "x86|^arm$")
+      message(FATAL_ERROR "64-bit toolset mismatch detected for DIRECTX_ARCH setting")
+    endif()
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    if(DIRECTX_ARCH MATCHES "x64|arm64")
+      message(FATAL_ERROR "32-bit toolset mismatch detected for DIRECTX_ARCH setting")
+    endif()
+endif()
+
 #--- Build with Unicode Win32 APIs per "UTF-8 Everywhere"
 if(WIN32)
   list(APPEND COMPILER_DEFINES _UNICODE UNICODE)
@@ -107,6 +118,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|IntelLLVM")
 
     if(WINDOWS_STORE)
       list(APPEND COMPILER_DEFINES _SILENCE_CLANG_COROUTINE_MESSAGE)
+    endif()
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+      list(APPEND COMPILER_SWITCHES -Wc++20-compat)
+    endif()
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.0)
+      list(APPEND COMPILER_SWITCHES -Wc++23-compat)
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     list(APPEND COMPILER_SWITCHES /Zc:__cplusplus /Zc:inline /fp:fast /Qdiag-disable:161)
@@ -174,7 +193,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     if(WINDOWS_STORE AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.32))
-      list(APPEND COMPILER_SWITCHES "/wd5246")
+      list(APPEND COMPILER_SWITCHES /wd5246)
     endif()
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.35)

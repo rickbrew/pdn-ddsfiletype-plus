@@ -1,9 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.21)
 
-set(DIRECTXTEX_VERSION 2.0.7)
+set(DIRECTXTEX_VERSION 2.0.9)
 
 if(XBOX_CONSOLE_TARGET STREQUAL "durango")
   set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
@@ -46,6 +46,8 @@ option(DISABLE_MSVC_ITERATOR_DEBUGGING "Disable iterator debugging in Debug conf
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
 option(ENABLE_CODE_COVERAGE "Build with code-coverage" OFF)
+
+option(ENABLE_CODE_PROFILING "Build for profiling" OFF)
 
 option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
 
@@ -140,7 +142,9 @@ if(DEFINED XBOX_CONSOLE_TARGET)
     endif()
 
 elseif((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
-    if(DEFINED ENV{GameDKLatest})
+    if((DEFINED ENV{GameDKXboxLatest}) AND (NOT ("$ENV{GameDKXboxLatest}" STREQUAL "")))
+        cmake_path(SET GameDK_DIR "$ENV{GameDKXboxLatest}")
+    elseif(DEFINED ENV{GameDKLatest})
         cmake_path(SET GameDK_DIR "$ENV{GameDKLatest}")
     endif()
     if(DEFINED ENV{XboxOneXDKLatest})
@@ -276,8 +280,22 @@ if(ENABLE_OPENEXR_SUPPORT)
 endif()
 
 if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
-    if(EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+    if(EXISTS "${GameDK_DIR}/xbox/include/devpctools/gxdk.h")
         message(STATUS "Building Xbox extensions for Xbox Series X|S")
+
+        add_library(Xbox::GDKX SHARED IMPORTED)
+        set_target_properties(Xbox::GDKX PROPERTIES
+            IMPORTED_LOCATION "${GameDK_DIR}/xbox/bin/devpctools/gen9/xg_xs.dll"
+            IMPORTED_IMPLIB "${GameDK_DIR}/xbox/lib/devpctools/gen9/xg_xs.lib"
+            MAP_IMPORTED_CONFIG_MINSIZEREL ""
+            MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
+            INTERFACE_COMPILE_DEFINITIONS "_USE_GXDK;_USE_SCARLETT"
+            INTERFACE_INCLUDE_DIRECTORIES "${GameDK_DIR}/xbox/include/devpctools;${GameDK_DIR}/xbox/include/devpctools/gen9")
+
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
+    elseif(EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+        message(STATUS "Building Xbox extensions for Xbox Series X|S (old layouts)")
 
         add_library(Xbox::GDKX SHARED IMPORTED)
         set_target_properties(Xbox::GDKX PROPERTIES
@@ -291,11 +309,25 @@ if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
         target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
     else()
-        message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest")
+        message(FATAL_ERROR "Building Xbox extensions requires GameDKXboxLatest or GameDKLatest")
     endif()
 elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
-    if(EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+    if(EXISTS "${GameDK_DIR}/xbox/include/devpctools/gxdk.h")
         message(STATUS "Building Xbox extensions for XboxOne using the Microsoft GDK")
+
+        add_library(Xbox::GDKX SHARED IMPORTED)
+        set_target_properties(Xbox::GDKX PROPERTIES
+            IMPORTED_LOCATION "${GameDK_DIR}/xbox/bin/devpctools/gen8/xg.dll"
+            IMPORTED_IMPLIB "${GameDK_DIR}/xbox/lib/devpctools/gen8/xg.lib"
+            MAP_IMPORTED_CONFIG_MINSIZEREL ""
+            MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
+            INTERFACE_COMPILE_DEFINITIONS "_USE_GXDK"
+            INTERFACE_INCLUDE_DIRECTORIES "${GameDK_DIR}/xbox/include/devpctools;${GameDK_DIR}/xbox/include/devpctools/gen8")
+
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
+    elseif(EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+        message(STATUS "Building Xbox extensions for XboxOne using the Microsoft GDK (old layouts)")
 
         add_library(Xbox::GDKX SHARED IMPORTED)
         set_target_properties(Xbox::GDKX PROPERTIES
@@ -308,7 +340,6 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
 
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
         target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
-
     elseif(EXISTS "${XboxOneXDK_DIR}/PC/include/xdk.h")
         message(STATUS "Building Xbox extensions for XboxOne using the Xbox One XDK")
 
@@ -323,7 +354,7 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
         target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::XDK)
     else()
-        message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest or XboxOneXDKLatest")
+        message(FATAL_ERROR "Building Xbox extensions requires GameDKXboxLatest, GameDKLatest, or XboxOneXDKLatest")
     endif()
 endif()
 
@@ -507,13 +538,11 @@ if(BUILD_TOOLS AND WIN32)
     target_compile_definitions(texconv PRIVATE USE_XBOX_EXTS)
     target_link_libraries(texconv PUBLIC $<TARGET_NAME_IF_EXISTS:Xbox::GDKX> $<TARGET_NAME_IF_EXISTS:Xbox::XDK>)
 
-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21")
-      add_custom_command(TARGET texconv POST_BUILD
-          COMMAND ${CMAKE_COMMAND} -E copy
-          $<TARGET_RUNTIME_DLLS:texconv> $<TARGET_FILE_DIR:texconv>
-          COMMAND_EXPAND_LISTS
-          )
-    endif()
+    add_custom_command(TARGET texconv POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_RUNTIME_DLLS:texconv> $<TARGET_FILE_DIR:texconv>
+        COMMAND_EXPAND_LISTS
+        )
   endif()
 endif()
 
@@ -616,6 +645,13 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       endforeach()
     endif()
 
+    if(ENABLE_CODE_PROFILING)
+      message(STATUS "Building with /PROFILE")
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_link_options(${t} PRIVATE /profile)
+      endforeach()
+    endif()
+
     if(ENABLE_SPECTRE_MITIGATION
        AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.13)
        AND (NOT ENABLE_OPENEXR_SUPPORT)
@@ -633,9 +669,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         endforeach()
     endif()
 
-    set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4514" "/wd4571" "/wd4625" "/wd4626" "/wd4627" "/wd4668" "/wd4710" "/wd4711" "/wd4751" "/wd4774" "/wd4820" "/wd5026" "/wd5027" "/wd5039" "/wd5045" "/wd5219")
+    set(WarningsEXE /wd4061 /wd4062 /wd4365 /wd4514 /wd4571 /wd4625 /wd4626 /wd4627 /wd4668 /wd4710 /wd4711 /wd4751 /wd4774 /wd4820 /wd5026 /wd5027 /wd5039 /wd5045 /wd5219)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.34)
-      list(APPEND WarningsEXE "/wd5262" "/wd5264")
+      list(APPEND WarningsEXE /wd5262 /wd5264)
+    endif()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.50)
+      list(APPEND WarningsEXE /wd4865)
     endif()
     foreach(t IN LISTS TOOL_EXES)
       target_compile_options(${t} PRIVATE ${WarningsEXE})
