@@ -117,7 +117,7 @@ namespace DdsFileTypePlus
                         // Try to get the DXGI adapter that Paint.NET uses for rendering.
                         // This device will be used by the DirectCompute-based BC6H/BC7 compressor, if it supports DirectCompute.
                         // If the specified device does not support DirectCompute, either WARP or the CPU compressor will be used.
-                        IDxgiAdapterService dxgiAdapterService = services.GetService<IDxgiAdapterService>();
+                        IDxgiAdapterService2 dxgiAdapterService = services.GetService<IDxgiAdapterService2>();
 
                         using (SafeComObject dxgiAdapterComObject = dxgiAdapterService.GetRenderingAdapter())
                         {
