@@ -11,6 +11,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 using PaintDotNet;
+using PaintDotNet.FileTypes;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -57,10 +58,12 @@ namespace DdsFileTypePlus
 
                 if (fileTypesService != null)
                 {
-                    foreach (IFileTypeInfo item in fileTypesService.FileTypes)
+                    foreach (IFileTypeInfo item in fileTypesService.Infos)
                     {
+                        // TODO: This should detect by file extension, not by the display name of the FileType
+                        //       can use FindFileTypeForLoadingExtension() for that
                         if (item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
-                            && item.Options.SupportsLoading)
+                            && item.SupportsLoading)
                         {
                             fileTypeInfo = item;
                             break;
