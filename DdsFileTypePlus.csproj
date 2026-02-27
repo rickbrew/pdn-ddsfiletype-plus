@@ -1,65 +1,50 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EC549B85-B295-4639-8610-24B7A8F6BDB0}</ProjectGuid>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DdsFileTypePlus</RootNamespace>
-    <AssemblyName>DdsFileTypePlus</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- MSB3277 removes the harmless and unhelpful warning about assembly version "conflicts" (e.g. CommunityToolkit.HighPerformance) -->
+    <NoWarn>MSB3277</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    
+    <!-- TODO: revert HintPaths back to what it was before -->
+    
     <Reference Include="PaintDotNet.Base">
       <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.ComponentModel">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.ComponentModel.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Core">
       <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="PaintDotNet.Data">
-      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Data.dll</HintPath>
+    <Reference Include="PaintDotNet.FileTypes">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.FileTypes.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Xml" />
+    <Reference Include="PaintDotNet.Fundamentals">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Fundamentals.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Primitives">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.PropertySystem">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.PropertySystem.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows.Core">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Windows.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows.Framework">
+      <HintPath>d:\src\pdn\src\paintdotnet\bin\release\PaintDotNet.Windows.Framework.dll</HintPath>
+    </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="BC7CompressionMode.cs" />
-    <Compile Include="DdsErrorMetric.cs" />
-    <Compile Include="DdsFile.cs" />
-    <Compile Include="DdsFileFormat.cs" />
-    <Compile Include="DdsFileType.cs" />
-    <Compile Include="DdsFileTypeFactory.cs" />
-    <Compile Include="DdsNative.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Texture.cs" />
-    <Compile Include="TextureCollection.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "D:\Program Files\paint.net\FileTypes" /y</PostBuildEvent>
   </PropertyGroup>
