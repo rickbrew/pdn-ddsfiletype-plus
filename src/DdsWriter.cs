@@ -492,7 +492,7 @@ namespace DdsFileTypePlus
         {
             using IBitmap<ColorBgra32> mipBitmap = imagingFactory.CreateBitmap<ColorBgra32>((int)mipData.Width, (int)mipData.Height);
 
-            using IBitmapSource<ColorBgra32> resampledSource = CreateScaler(source.Bitmap, mipBitmap.Size, algorithm, useGammaCorrection, imagingFactory);
+            using IBitmapSource<ColorBgra32> resampledSource = CreateBitmapScaler(source.Bitmap, mipBitmap.Size, algorithm, useGammaCorrection, imagingFactory);
 
             if (!source.HasTransparency)
             {
@@ -502,7 +502,7 @@ namespace DdsFileTypePlus
             {
                 // Downscaling images with transparency is done in a way that allows the completely transparent areas
                 // to retain their RGB color values, this behavior is required by some programs that use DDS files.
-                using IBitmapSource<ColorBgra32> resampledSourceOpaque = CreateScaler(source.OpaqueSurface, mipBitmap.Size, algorithm, useGammaCorrection, imagingFactory);
+                using IBitmapSource<ColorBgra32> resampledSourceOpaque = CreateBitmapScaler(source.OpaqueSurface, mipBitmap.Size, algorithm, useGammaCorrection, imagingFactory);
 
                 // Copy the color data from the opaque image to create a merged image with the transparent pixels retaining their original values.
                 using IBitmapSource<ColorBgra32> mipBitmapSource = resampledSourceOpaque.CreateChannelReplacer(3, resampledSource);
@@ -514,7 +514,7 @@ namespace DdsFileTypePlus
             RenderToDirectXTexScratchImage(mipBitmapLock.AsRegionPtr(), mipData, format);
         }
 
-        private static IBitmapSource<TPixel> CreateScaler<TPixel>(IBitmapSource<TPixel> source, SizeInt32 dstSize, BitmapInterpolationMode2 mode, bool useGammaCorrection, IImagingFactory imagingFactory)
+        private static IBitmapSource<TPixel> CreateBitmapScaler<TPixel>(IBitmapSource<TPixel> source, SizeInt32 dstSize, BitmapInterpolationMode2 mode, bool useGammaCorrection, IImagingFactory imagingFactory)
             where TPixel : unmanaged, INaturalPixelInfo
         {
             if (useGammaCorrection)
@@ -525,7 +525,7 @@ namespace DdsFileTypePlus
                 using IColorContext formatColorContextLinear = imagingFactory.TryCreateLinearizedColorContext(formatColorContext) ?? formatColorContext.CreateRef();
                 using IBitmapSource<ColorRgba128Float> sourceRgba128FL = source.CreateColorTransformer<ColorRgba128Float>(formatColorContext, formatColorContextLinear);
                 using IBitmapSource<ColorRgba128Float> scaledRgba128FL = sourceRgba128FL.CreateScaler(dstSize, mode);
-                using IBitmapSource<TPixel> scaled = scaledRgba128FL.CreateColorTransformer<TPixel>(formatColorContextLinear, formatColorContext);
+                IBitmapSource<TPixel> scaled = scaledRgba128FL.CreateColorTransformer<TPixel>(formatColorContextLinear, formatColorContext);
                 return scaled;
             }
             else
