@@ -12,119 +12,118 @@
 
 using DdsFileTypePlus.Interop;
 using PaintDotNet;
+using PaintDotNet.FileTypes;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
 using System;
-using System.IO;
 
 namespace DdsFileTypePlus
 {
     internal static class DdsReader
     {
-        public static unsafe Document Load(Stream input, IServiceProvider services)
+        public static unsafe IFileTypeDocument Load(IFileTypeLoadContext context, IServiceProvider services)
         {
-            Document doc = null;
-
             try
             {
-                using (DirectXTexScratchImage image = DdsNative.Load(input, out DDSLoadInfo info))
+                using DirectXTexScratchImage image = DdsNative.Load(context.Input, out DDSLoadInfo info);
+
+                if (info.IsTextureArray)
                 {
-                    if (info.IsTextureArray)
-                    {
-                        // Reject files containing a texture array because loading only the first item
-                        // poses a data loss risk when saving.
-                        throw new FormatException("DDS files containing a texture array are not supported.");
-                    }
-                    else if (info.VolumeMap && info.Depth > 1)
-                    {
-                        // Reject files containing a volume map with multiple slices because loading
-                        // only the first item poses a data loss risk when saving.
-                        throw new FormatException("DDS files containing a volume map are not supported.");
-                    }
-
-                    int documentWidth = checked((int)info.Width);
-                    int documentHeight = checked((int)info.Height);
-
-                    if (info.CubeMap)
-                    {
-                        // Cube maps are flattened using the horizontal cross layout.
-                        documentWidth = checked(documentWidth * 4);
-                        documentHeight = checked(documentHeight * 3);
-                    }
-
-                    doc = new Document(documentWidth, documentHeight);
-
-                    BitmapLayer layer = Layer.CreateBackgroundLayer(documentWidth, documentHeight);
-
-                    RegionPtr<ColorBgra32> destination = layer.Surface.AsRegionPtr().Cast<ColorBgra32>();
-
-                    if (info.CubeMap)
-                    {
-                        // The cube map faces in a DDS file are always ordered: +X, -X, +Y, -Y, +Z, -Z.
-                        // Setup the offsets used to convert the cube map faces to a horizontal crossed image.
-                        // A horizontal crossed image uses the following layout:
-                        //
-                        //		  [ +Y ]
-                        //	[ -X ][ +Z ][ +X ][ -Z ]
-                        //		  [ -Y ]
-                        //
-                        int cubeMapWidth = (int)info.Width;
-                        int cubeMapHeight = (int)info.Height;
-
-                        Point2Int32[] cubeMapOffsets = new Point2Int32[6]
-                        {
-                            new Point2Int32(cubeMapWidth * 2, cubeMapHeight), // +X
-                            new Point2Int32(0, cubeMapHeight),			      // -X
-                            new Point2Int32(cubeMapWidth, 0),			      // +Y
-                            new Point2Int32(cubeMapWidth, cubeMapHeight * 2), // -Y
-                            new Point2Int32(cubeMapWidth, cubeMapHeight),	  // +Z
-                            new Point2Int32(cubeMapWidth * 3, cubeMapHeight)  // -Z
-                        };
-
-                        // Initialize the layer as completely transparent.
-                        destination.Clear();
-
-                        for (int i = 0; i < 6; ++i)
-                        {
-                            DirectXTexScratchImageData data = image.GetImageData(0, (uint)i, 0);
-                            Point2Int32 offset = cubeMapOffsets[i];
-
-                            RegionPtr<ColorRgba32> source = data.AsRegionPtr<ColorRgba32>();
-                            RegionPtr<ColorBgra32> target = destination.Slice(offset.X, offset.Y, cubeMapWidth, cubeMapHeight);
-
-                            RenderDdsImage(source, target, info);
-                        }
-                    }
-                    else
-                    {
-                        // For images other than cube maps we only load the first image in the file.
-                        DirectXTexScratchImageData data = image.GetImageData(0, 0, 0);
-
-                        RenderDdsImage(data.AsRegionPtr<ColorRgba32>(), destination, info);
-                    }
-
-                    doc.Layers.Add(layer);
+                    // Reject files containing a texture array because loading only the first item
+                    // poses a data loss risk when saving.
+                    throw new FormatException("DDS files containing a texture array are not supported.");
                 }
+                else if (info.VolumeMap && info.Depth > 1)
+                {
+                    // Reject files containing a volume map with multiple slices because loading
+                    // only the first item poses a data loss risk when saving.
+                    throw new FormatException("DDS files containing a volume map are not supported.");
+                }
+
+                int documentWidth = checked((int)info.Width);
+                int documentHeight = checked((int)info.Height);
+
+                if (info.CubeMap)
+                {
+                    // Cube maps are flattened using the horizontal cross layout.
+                    documentWidth = checked(documentWidth * 4);
+                    documentHeight = checked(documentHeight * 3);
+                }
+
+                using IFileTypeDocument<ColorBgra32> doc = context.Factory.CreateDocument<ColorBgra32>(documentWidth, documentHeight);
+
+                using IFileTypeBitmapLayer<ColorBgra32> layer = doc.CreateBitmapLayer();
+                using IFileTypeBitmapSink<ColorBgra32> layerSink = layer.GetBitmap();
+                using IFileTypeBitmapLock<ColorBgra32> layerSinkLock = layerSink.Lock(BitmapLockOptions.Write);
+                RegionPtr<ColorBgra32> destination = layerSinkLock.AsRegionPtr();
+
+                if (info.CubeMap)
+                {
+                    // The cube map faces in a DDS file are always ordered: +X, -X, +Y, -Y, +Z, -Z.
+                    // Setup the offsets used to convert the cube map faces to a horizontal crossed image.
+                    // A horizontal crossed image uses the following layout:
+                    //
+                    //		  [ +Y ]
+                    //	[ -X ][ +Z ][ +X ][ -Z ]
+                    //		  [ -Y ]
+                    //
+                    int cubeMapWidth = (int)info.Width;
+                    int cubeMapHeight = (int)info.Height;
+
+                    Point2Int32[] cubeMapOffsets = new Point2Int32[6]
+                    {
+                        new Point2Int32(cubeMapWidth * 2, cubeMapHeight), // +X
+                        new Point2Int32(0, cubeMapHeight),			      // -X
+                        new Point2Int32(cubeMapWidth, 0),			      // +Y
+                        new Point2Int32(cubeMapWidth, cubeMapHeight * 2), // -Y
+                        new Point2Int32(cubeMapWidth, cubeMapHeight),	  // +Z
+                        new Point2Int32(cubeMapWidth * 3, cubeMapHeight)  // -Z
+                    };
+
+                    // Initialize the layer as completely transparent.
+                    destination.Clear();
+
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        DirectXTexScratchImageData data = image.GetImageData(0, (uint)i, 0);
+                        Point2Int32 offset = cubeMapOffsets[i];
+
+                        RegionPtr<ColorRgba32> source = data.AsRegionPtr<ColorRgba32>();
+                        RegionPtr<ColorBgra32> target = destination.Slice(offset.X, offset.Y, cubeMapWidth, cubeMapHeight);
+
+                        RenderDdsImage(source, target, info);
+                    }
+                }
+                else
+                {
+                    // For images other than cube maps we only load the first image in the file.
+                    DirectXTexScratchImageData data = image.GetImageData(0, 0, 0);
+
+                    RenderDdsImage(data.AsRegionPtr<ColorRgba32>(), destination, info);
+                }
+
+                doc.Layers.Add(layer);
+
+                return doc;
             }
             catch (FormatException ex) when (ex.HResult == HResult.InvalidDdsFileSignature)
             {
-                IFileTypeInfo fileTypeInfo = FormatDetection.TryGetFileTypeInfo(input, services);
+                IFileTypeInfo? fileTypeInfo = FormatDetection.TryGetFileTypeInfo(context.Input, services);
 
                 if (fileTypeInfo != null)
                 {
-                    FileType fileType = fileTypeInfo.GetInstance();
+                    using IFileType fileType = fileTypeInfo.CreateInstance();
+                    using IFileTypeLoader loader = fileType.CreateLoader();
 
-                    input.Position = 0;
+                    context.Input.Position = 0;
 
-                    doc = fileType.Load(input);
+                    return loader.Load(context.Input);
                 }
                 else
                 {
                     throw;
                 }
             }
-
-            return doc;
         }
 
         private static void RenderDdsImage(RegionPtr<ColorRgba32> source,
