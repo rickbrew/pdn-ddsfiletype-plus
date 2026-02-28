@@ -50,7 +50,7 @@ namespace DdsFileTypePlus
                     documentHeight = checked(documentHeight * 3);
                 }
 
-                using IFileTypeDocument<ColorBgra32> doc = context.Factory.CreateDocument<ColorBgra32>(documentWidth, documentHeight);
+                IFileTypeDocument<ColorBgra32> doc = context.Factory.CreateDocument<ColorBgra32>(documentWidth, documentHeight);
 
                 using IFileTypeBitmapLayer<ColorBgra32> layer = doc.CreateBitmapLayer();
                 using IFileTypeBitmapSink<ColorBgra32> layerSink = layer.GetBitmap();
