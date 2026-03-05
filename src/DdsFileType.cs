@@ -192,7 +192,7 @@ namespace DdsFileTypePlus
                         BitmapInterpolationMode2.NearestNeighbor,
                     };
 
-                    int defaultChoiceIndex = Array.IndexOf(values, BitmapInterpolationMode2.Cubic);
+                    int defaultChoiceIndex = Array.IndexOf(values, BitmapInterpolationMode2.HighQualityCubic);
 
                     return new StaticListChoiceProperty(PropertyNames.MipMapResamplingAlgorithm, values, defaultChoiceIndex, false);
                 }
