@@ -182,7 +182,7 @@ namespace DdsFileTypePlus
                 {
                     object[] values = new object[]
                     {
-                        BitmapInterpolationMode2.Cubic,
+                        BitmapInterpolationMode2.HighQualityCubic,
                         BitmapInterpolationMode2.CubicSmooth,
                         BitmapInterpolationMode2.HighQualityLinear,
                         BitmapInterpolationMode2.Linear,
