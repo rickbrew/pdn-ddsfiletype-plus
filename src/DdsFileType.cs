@@ -261,7 +261,7 @@ namespace DdsFileTypePlus
 
                 PropertyControlInfo mipResamplingPCI = configUI.FindControlForPropertyName(PropertyNames.MipMapResamplingAlgorithm);
                 mipResamplingPCI.ControlProperties[ControlInfoPropertyNames.DisplayName].Value = string.Empty;
-                mipResamplingPCI.SetValueDisplayName(BitmapInterpolationMode2.Cubic, this.fileType.strings.GetString("ResamplingAlgorithm_Cubic"));
+                mipResamplingPCI.SetValueDisplayName(BitmapInterpolationMode2.HighQualityCubic, this.fileType.strings.GetString("ResamplingAlgorithm_Cubic"));
                 mipResamplingPCI.SetValueDisplayName(BitmapInterpolationMode2.CubicSmooth, this.fileType.strings.GetString("ResamplingAlgorithm_CubicSmooth"));
                 mipResamplingPCI.SetValueDisplayName(BitmapInterpolationMode2.HighQualityLinear, this.fileType.strings.GetString("ResamplingAlgorithm_Linear"));
                 mipResamplingPCI.SetValueDisplayName(BitmapInterpolationMode2.Linear, this.fileType.strings.GetString("ResamplingAlgorithm_LinearLowQuality"));
