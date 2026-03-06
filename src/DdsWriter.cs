@@ -41,7 +41,9 @@ namespace DdsFileTypePlus
             ProgressEventHandler progressCallback)
         {
             using IFileTypeCompositeBitmap<ColorBgra32> composite = input.GetCompositeBitmap<ColorBgra32>();
-            using IBitmap<ColorBgra32> compositeBitmap = composite.ToBitmap();
+            using IFileTypeBitmapLock<ColorBgra32> compositeLock = composite.Lock();
+            RegionPtr<ColorBgra32> compositeRegion = compositeLock.AsRegionPtr();
+            using RegionPtrBitmap<ColorBgra32> compositeBitmap = new RegionPtrBitmap<ColorBgra32>(compositeRegion);
 
             int width = compositeBitmap.Size.Width;
             int height = compositeBitmap.Size.Height;
