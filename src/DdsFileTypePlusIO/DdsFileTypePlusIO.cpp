@@ -277,6 +277,7 @@ HRESULT __stdcall Load(
     loadInfo->depth = info.depth;
     loadInfo->arraySize = info.arraySize;
     loadInfo->mipLevels = info.mipLevels;
+    loadInfo->format = originalImageMetadata.format;
     loadInfo->swizzledImageFormat = GetSwizzledImageFormat(originalImageMetadata, ddsPixelFormat);
     loadInfo->cubeMap = info.IsCubemap();
     loadInfo->premultipliedAlpha = HasAlpha(info.format) && info.format != DXGI_FORMAT_A8_UNORM && info.IsPMAlpha();

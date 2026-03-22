@@ -85,6 +85,7 @@ extern "C" {
         size_t depth;
         size_t arraySize;
         size_t mipLevels;
+        DXGI_FORMAT format;
         SwizzledImageFormat swizzledImageFormat;
         bool cubeMap;
         bool premultipliedAlpha;

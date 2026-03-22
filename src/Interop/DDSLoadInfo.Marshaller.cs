@@ -21,13 +21,14 @@ namespace DdsFileTypePlus.Interop
         {
             // This must be kept in sync with DDSLoadInfo.cs
             // and the DDSLoadInfo type in DdsFileTypePlusIO.h
-            public unsafe struct Native
+            public struct Native
             {
                 public nuint width;
                 public nuint height;
                 public nuint depth;
                 public nuint arraySize;
                 public nuint mipLevels;
+                public DXGI_FORMAT format;
                 public SwizzledImageFormat swizzledImageFormat;
                 public byte cubeMap;
                 public byte premultipliedAlpha;
@@ -43,6 +44,7 @@ namespace DdsFileTypePlus.Interop
                     Depth = unmanaged.depth,
                     ArraySize = unmanaged.arraySize,
                     MipLevels = unmanaged.mipLevels,
+                    Format = unmanaged.format,
                     SwizzledImageFormat = unmanaged.swizzledImageFormat,
                     CubeMap = unmanaged.cubeMap != 0,
                     PremultipliedAlpha = unmanaged.premultipliedAlpha != 0,
