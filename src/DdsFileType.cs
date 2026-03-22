@@ -18,7 +18,6 @@ using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace DdsFileTypePlus
 {
@@ -69,6 +68,18 @@ namespace DdsFileTypePlus
             public Saver(DdsFileType fileType) : base(fileType)
             {
                 this.fileType = fileType;
+            }
+
+            protected override PropertyCollection OnCreateSavePropertiesForDocument(ICreateSavePropertiesForDocumentContext context)
+            {
+                PropertyCollection properties = context.ProposedProperties.Clone();
+
+                if (SaveOptionsMetadata.TryLoad(context.MetadataFromLoad, out SaveOptionsMetadata? metadata))
+                {
+                    properties[PropertyNames.FileFormat].Value = metadata.Format;
+                }
+
+                return properties;
             }
 
             protected override PropertyCollection OnCreateDefaultSaveProperties()

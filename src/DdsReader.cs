@@ -21,11 +21,21 @@ namespace DdsFileTypePlus
 {
     internal static class DdsReader
     {
-        public static unsafe IFileTypeDocument Load(IFileTypeLoadContext context, IServiceProvider services)
+        public static IFileTypeDocument Load(IFileTypeLoadContext context, IServiceProvider services)
         {
             try
             {
                 using DirectXTexScratchImage image = DdsNative.Load(context.Input, out DDSLoadInfo info);
+
+                if (TryGetLoadFormat(info.Format, info.SwizzledImageFormat, out DdsFileFormat loadFormat))
+                {
+                    SaveOptionsMetadata metadata = new SaveOptionsMetadata()
+                    {
+                        Format = loadFormat
+                    };
+
+                    metadata.Save(context.MetadataForSaveOptions);
+                }
 
                 if (info.IsTextureArray)
                 {
@@ -124,6 +134,105 @@ namespace DdsFileTypePlus
                     throw;
                 }
             }
+        }
+
+        private static bool TryGetLoadFormat(
+            DXGI_FORMAT format,
+            SwizzledImageFormat swizzledImageFormat,
+            out DdsFileFormat loadFormat)
+        {
+            bool result = true;
+            switch (format)
+            {
+                case DXGI_FORMAT.DXGI_FORMAT_BC1_UNORM:
+                    loadFormat = DdsFileFormat.BC1;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC1_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.BC1Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC2_UNORM:
+                    loadFormat = DdsFileFormat.BC2;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC2_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.BC2Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC3_UNORM:
+                    if (swizzledImageFormat == SwizzledImageFormat.Rxbg)
+                    {
+                        loadFormat = DdsFileFormat.BC3Rxgb;
+                    }
+                    else
+                    {
+                        loadFormat = DdsFileFormat.BC3;
+                    }
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC3_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.BC3Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC4_UNORM:
+                    loadFormat = DdsFileFormat.BC4Unsigned;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC5_UNORM:
+                    loadFormat = DdsFileFormat.BC5Unsigned;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC5_SNORM:
+                    loadFormat = DdsFileFormat.BC5Signed;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC6H_UF16:
+                    loadFormat = DdsFileFormat.BC6HUnsigned;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC7_UNORM:
+                    loadFormat = DdsFileFormat.BC7;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_BC7_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.BC7Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM:
+                    loadFormat = DdsFileFormat.B8G8R8A8;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.B8G8R8A8Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B8G8R8X8_UNORM:
+                    loadFormat = DdsFileFormat.B8G8R8X8;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.B8G8R8X8Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_R8G8B8A8_UNORM:
+                    loadFormat = DdsFileFormat.R8G8B8A8;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+                    loadFormat = DdsFileFormat.R8G8B8A8Srgb;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B5G5R5A1_UNORM:
+                    loadFormat = DdsFileFormat.B5G5R5A1;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B4G4R4A4_UNORM:
+                    loadFormat = DdsFileFormat.B4G4R4A4;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_B5G6R5_UNORM:
+                    loadFormat = DdsFileFormat.B5G6R5;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_R8_UNORM:
+                    loadFormat = DdsFileFormat.R8Unsigned;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_R8G8_UNORM:
+                    loadFormat = DdsFileFormat.R8G8Unsigned;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_R8G8_SNORM:
+                    loadFormat = DdsFileFormat.R8G8Signed;
+                    break;
+                case DXGI_FORMAT.DXGI_FORMAT_R32_FLOAT:
+                    loadFormat = DdsFileFormat.R32Float;
+                    break;
+                default:
+                    loadFormat = default;
+                    result = false;
+                    break;
+            }
+
+            return result;
         }
 
         private static void RenderDdsImage(RegionPtr<ColorRgba32> source,
