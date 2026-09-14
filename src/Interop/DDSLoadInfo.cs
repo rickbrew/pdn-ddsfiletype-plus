@@ -27,6 +27,9 @@ namespace DdsFileTypePlus.Interop
 
         public nuint ArraySize { get; init; }
 
+        /// <summary>
+        /// The mip level count from the file header, the loaded image may contain fewer levels.
+        /// </summary>
         public nuint MipLevels { get; init; }
 
         public DXGI_FORMAT Format { get; init; }

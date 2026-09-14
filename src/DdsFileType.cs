@@ -76,7 +76,15 @@ namespace DdsFileTypePlus
 
                 if (SaveOptionsMetadata.TryLoad(context.MetadataFromLoad, out SaveOptionsMetadata? metadata))
                 {
-                    properties[PropertyNames.FileFormat].Value = metadata.Format;
+                    if (metadata.Format.HasValue)
+                    {
+                        properties[PropertyNames.FileFormat].Value = metadata.Format.Value;
+                    }
+
+                    if (metadata.GenerateMipMaps.HasValue)
+                    {
+                        properties[PropertyNames.GenerateMipMaps].Value = metadata.GenerateMipMaps.Value;
+                    }
                 }
 
                 return properties;

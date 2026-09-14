@@ -84,6 +84,7 @@ extern "C" {
         size_t height;
         size_t depth;
         size_t arraySize;
+        // The mip level count from the file header, the loaded image may contain fewer levels.
         size_t mipLevels;
         DXGI_FORMAT format;
         SwizzledImageFormat swizzledImageFormat;
