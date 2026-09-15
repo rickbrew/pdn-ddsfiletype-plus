@@ -19,8 +19,15 @@ namespace DdsFileTypePlus
     public sealed class SaveOptionsMetadata
     {
         private const string FormatName = $"{nameof(DdsFileType)}.{nameof(Format)}";
+        private const string GenerateMipMapsName = $"{nameof(DdsFileType)}.{nameof(GenerateMipMaps)}";
 
-        public DdsFileFormat Format
+        public DdsFileFormat? Format
+        {
+            get;
+            init;
+        }
+
+        public bool? GenerateMipMaps
         {
             get;
             init;
@@ -32,12 +39,23 @@ namespace DdsFileTypePlus
 
         public void Save(IFileTypePropertyBag propertyBag)
         {
-            propertyBag.SetItem(FormatName, Format);
+            if (this.Format.HasValue)
+            {
+                propertyBag.SetItem(FormatName, this.Format.Value);
+            }
+
+            if (this.GenerateMipMaps.HasValue)
+            {
+                propertyBag.SetItem(GenerateMipMapsName, this.GenerateMipMaps.Value);
+            }
         }
 
         public static bool TryLoad(IReadOnlyFileTypePropertyBag propertyBag, [NotNullWhen(true)] out SaveOptionsMetadata? metadata)
         {
-            if (!propertyBag.TryGetValue(FormatName, out DdsFileFormat format))
+            DdsFileFormat? format = propertyBag.TryGetValue(FormatName, out DdsFileFormat formatValue) ? formatValue : null;
+            bool? generateMipMaps = propertyBag.TryGetValue(GenerateMipMapsName, out bool generateMipMapsValue) ? generateMipMapsValue : null;
+
+            if (!format.HasValue && !generateMipMaps.HasValue)
             {
                 metadata = null;
                 return false;
@@ -45,7 +63,8 @@ namespace DdsFileTypePlus
 
             metadata = new SaveOptionsMetadata()
             {
-                Format = format
+                Format = format,
+                GenerateMipMaps = generateMipMaps
             };
 
             return true;
