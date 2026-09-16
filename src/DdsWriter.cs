@@ -508,7 +508,6 @@ namespace DdsFileTypePlus
 
                 // Copy the alpha channel from the non-opaque image to create a merged image with the transparent pixels retaining their original values.
                 using IBitmapSource<ColorAlpha8> resampledSourceAlpha = resampledSource.CreateChannelExtractor<ColorAlpha8>(3);
-
                 using IBitmapSource<ColorBgra32> mipBitmapSource = resampledOpaqueSource.CreateChannelReplacer(3, resampledSourceAlpha);
 
                 mipBitmap.WriteSource(mipBitmapSource);
