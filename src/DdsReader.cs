@@ -30,7 +30,7 @@ namespace DdsFileTypePlus
                 SaveOptionsMetadata metadata = new SaveOptionsMetadata()
                 {
                     Format = TryGetLoadFormat(info.Format, info.SwizzledImageFormat, out DdsFileFormat loadFormat) ? loadFormat : null,
-                    GenerateMipMaps = info.MipLevels > 1
+                    GenerateMipMaps = info.MipLevelsActual > 1
                 };
 
                 metadata.Save(context.MetadataForSaveOptions);

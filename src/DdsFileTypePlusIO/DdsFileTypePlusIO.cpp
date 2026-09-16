@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////
 //
 // This file is part of pdn-ddsfiletype-plus, a DDS FileType plugin
 // for Paint.NET that adds support for the DX10 and later formats.
@@ -326,7 +326,8 @@ HRESULT __stdcall Load(
     loadInfo->height = info.height;
     loadInfo->depth = info.depth;
     loadInfo->arraySize = info.arraySize;
-    loadInfo->mipLevels = fileMipMapCount;
+    loadInfo->mipLevelsLoaded = info.mipLevels;
+    loadInfo->mipLevelsActual = fileMipMapCount;
     loadInfo->format = originalImageMetadata.format;
     loadInfo->swizzledImageFormat = GetSwizzledImageFormat(originalImageMetadata, ddsPixelFormat);
     loadInfo->cubeMap = info.IsCubemap();
