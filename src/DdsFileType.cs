@@ -85,6 +85,11 @@ namespace DdsFileTypePlus
                     {
                         properties[PropertyNames.GenerateMipMaps].Value = metadata.GenerateMipMaps.Value;
                     }
+
+                    if (metadata.CubeMap.HasValue)
+                    {
+                        properties[PropertyNames.CubeMap].Value = metadata.CubeMap.Value;
+                    }
                 }
 
                 return properties;

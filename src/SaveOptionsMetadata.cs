@@ -20,6 +20,7 @@ namespace DdsFileTypePlus
     {
         private const string FormatName = $"{nameof(DdsFileType)}.{nameof(Format)}";
         private const string GenerateMipMapsName = $"{nameof(DdsFileType)}.{nameof(GenerateMipMaps)}";
+        private const string CubeMapName = $"{nameof(DdsFileType)}.{nameof(CubeMap)}";
 
         public DdsFileFormat? Format
         {
@@ -28,6 +29,12 @@ namespace DdsFileTypePlus
         }
 
         public bool? GenerateMipMaps
+        {
+            get;
+            init;
+        }
+
+        public bool? CubeMap
         {
             get;
             init;
@@ -48,14 +55,20 @@ namespace DdsFileTypePlus
             {
                 propertyBag.SetItem(GenerateMipMapsName, this.GenerateMipMaps.Value);
             }
+
+            if (this.CubeMap.HasValue)
+            {
+                propertyBag.SetItem(CubeMapName, this.CubeMap.Value);
+            }
         }
 
         public static bool TryLoad(IReadOnlyFileTypePropertyBag propertyBag, [NotNullWhen(true)] out SaveOptionsMetadata? metadata)
         {
             DdsFileFormat? format = propertyBag.TryGetValue(FormatName, out DdsFileFormat formatValue) ? formatValue : null;
             bool? generateMipMaps = propertyBag.TryGetValue(GenerateMipMapsName, out bool generateMipMapsValue) ? generateMipMapsValue : null;
+            bool? cubeMap = propertyBag.TryGetValue(CubeMapName, out bool cubeMapValue) ? cubeMapValue : null;
 
-            if (!format.HasValue && !generateMipMaps.HasValue)
+            if (!format.HasValue && !generateMipMaps.HasValue && !cubeMap.HasValue)
             {
                 metadata = null;
                 return false;
@@ -64,7 +77,8 @@ namespace DdsFileTypePlus
             metadata = new SaveOptionsMetadata()
             {
                 Format = format,
-                GenerateMipMaps = generateMipMaps
+                GenerateMipMaps = generateMipMaps,
+                CubeMap = cubeMap
             };
 
             return true;
